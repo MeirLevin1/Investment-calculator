@@ -1,220 +1,316 @@
-import matplotlib.pyplot as plt
-import matplotlib.ticker as mticker
-import numpy as np
-import ipywidgets as widgets
-from ipywidgets import VBox, HBox, Layout, interactive_output
-from IPython.display import display, clear_output
-import math # Needed for floor division
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מחשבון צמיחת השקעות | סימולטור פיננסי</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Rubik', sans-serif;
+            background-color: #f8fafc; /* Tailwind: slate-50 */
+        }
+        /* Custom Slider Styles */
+        .slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 6px;
+            background: #e2e8f0; /* slate-200 */
+            border-radius: 3px;
+            outline: none;
+            transition: opacity .2s;
+        }
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #4f46e5; /* indigo-600 */
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 0 0 1px rgba(0,0,0,0.05);
+        }
+        .slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            background: #4f46e5; /* indigo-600 */
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 0 0 1px rgba(0,0,0,0.05);
+        }
+        .ui-panel {
+            background-color: white;
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        .tooltip {
+            position: absolute;
+            text-align: center;
+            padding: 8px;
+            font-size: 12px;
+            background: #1f2937; /* gray-800 */
+            color: white;
+            border: 0px;
+            border-radius: 8px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            direction: ltr;
+        }
+    </style>
+</head>
+<body class="bg-slate-50">
 
-# --- Constants ---
-# --- Changed from CAR_PRICE to HOUSE_PRICE and updated value ---
-HOUSE_PRICE = 2000000 # Approximate price of a house in ILS
+    <header class="py-5 text-center border-b bg-white sticky top-0 z-10">
+        <h1 class="text-3xl font-bold text-slate-800">סימולטור צמיחה פיננסית</h1>
+    </header>
 
-# --- Core Calculation Logic (adapted to be a simple function) ---
-def calculate_growth(initial_amount, start_age, monthly_investment, monthly_withdrawal, annual_interest_rate_percent, end_age=80):
-    """Calculates investment growth based on input parameters."""
-    monthly_interest_rate = annual_interest_rate_percent / 100 / 12
-    ages = []
-    amounts = []
-    stop_calculation = False
+    <main class="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Input Controls Column -->
+            <div class="lg:col-span-1 ui-panel self-start lg:sticky lg:top-28">
+                <h2 class="text-lg font-semibold text-slate-700 mb-5">הגדרת פרמטרים</h2>
+                <div class="space-y-6">
+                    <div>
+                        <label for="initialAmountSlider" class="flex justify-between text-sm font-medium text-slate-600">
+                            <span>סכום התחלתי</span>
+                            <span id="initialAmountValue" class="font-semibold text-indigo-600"></span>
+                        </label>
+                        <input type="range" id="initialAmountSlider" min="0" max="2000000" step="5000" value="100000" class="slider mt-2">
+                    </div>
+                    <div>
+                        <label for="startAgeSlider" class="flex justify-between text-sm font-medium text-slate-600">
+                            <span>גיל התחלה</span>
+                            <span id="startAgeValue" class="font-semibold text-indigo-600"></span>
+                        </label>
+                        <input type="range" id="startAgeSlider" min="18" max="70" step="1" value="30" class="slider mt-2">
+                    </div>
+                    <div>
+                        <label for="monthlyInvestmentSlider" class="flex justify-between text-sm font-medium text-slate-600">
+                            <span>הפקדה חודשית</span>
+                             <span id="monthlyInvestmentValue" class="font-semibold text-indigo-600"></span>
+                        </label>
+                        <input type="range" id="monthlyInvestmentSlider" min="0" max="25000" step="500" value="1000" class="slider mt-2">
+                    </div>
+                    <div>
+                        <label for="monthlyWithdrawalSlider" class="flex justify-between text-sm font-medium text-slate-600">
+                            <span>משיכה חודשית</span>
+                            <span id="monthlyWithdrawalValue" class="font-semibold text-indigo-600"></span>
+                        </label>
+                        <input type="range" id="monthlyWithdrawalSlider" min="0" max="25000" step="500" value="0" class="slider mt-2">
+                    </div>
+                    <div>
+                        <label for="annualRateSlider" class="flex justify-between text-sm font-medium text-slate-600">
+                            <span>ריבית שנתית</span>
+                            <span id="annualRateValue" class="font-semibold text-indigo-600"></span>
+                        </label>
+                        <input type="range" id="annualRateSlider" min="0" max="25" step="0.1" value="7.0" class="slider mt-2">
+                    </div>
+                     <div>
+                        <label for="housePriceSlider" class="flex justify-between text-sm font-medium text-slate-600">
+                            <span>מחיר דירה להשוואה</span>
+                            <span id="housePriceValue" class="font-semibold text-indigo-600"></span>
+                        </label>
+                        <input type="range" id="housePriceSlider" min="500000" max="5000000" step="50000" value="2000000" class="slider mt-2">
+                    </div>
+                </div>
+            </div>
 
-    current_balance = initial_amount
-    if current_balance >= 0:
-        ages.append(start_age)
-        amounts.append(current_balance)
-    else:
-        # Cannot start with negative balance in this model
-        return [], [] # Return empty lists
+            <!-- Chart and Summary Column -->
+            <div class="lg:col-span-2 space-y-6">
+                <div id="chartContainerWrapper" class="ui-panel">
+                    <div id="chartContainer" class="w-full h-96">
+                       <svg id="growthChart" class="w-full h-full"></svg>
+                    </div>
+                </div>
+                <div id="summary" class="ui-panel grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                    <!-- Summary data will be injected here -->
+                </div>
+                <div id="milestonePanel" class="ui-panel">
+                    <h2 class="text-lg font-semibold text-slate-700 mb-3 text-center">ציוני דרך (לפי עשורים)</h2>
+                    <div id="milestoneList" class="flex items-center justify-center gap-4 flex-wrap">
+                        <!-- Milestone data will be injected here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <footer class="text-center text-xs text-slate-500 py-6">
+        החישובים מהווים המחשה בלבד | 
+        <a href="https://paypal.me/YourPayPalUsername" target="_blank" rel="noopener noreferrer" class="text-sky-600 hover:underline">תמיכה באמצעות PayPal</a>
+    </footer>
 
-    for age in range(start_age, end_age):
-        if stop_calculation:
-            break # Stop outer loop if balance depleted
+    <script>
+        // --- Core Calculation Logic ---
+        function calculateGrowth(params) {
+            const { initialAmount, startAge, monthlyInvestment, monthlyWithdrawal, annualRate } = params;
+            const monthlyInterestRate = annualRate / 100 / 12;
+            const data = [];
+            let stopCalculation = false;
+            let currentBalance = initialAmount;
 
-        for month in range(12):
-            if current_balance <= 0:
-                current_balance = 0
-                stop_calculation = True
-                break # Stop inner loop
+            if (currentBalance >= 0) {
+                data.push({ age: startAge, amount: currentBalance });
+            } else {
+                return [];
+            }
 
-            interest_earned = current_balance * monthly_interest_rate
-            current_balance += interest_earned
-            current_balance += monthly_investment
-            current_balance -= monthly_withdrawal
+            for (let age = startAge; age < 80; age++) {
+                if (stopCalculation) break;
+                for (let month = 0; month < 12; month++) {
+                    if (currentBalance <= 0) {
+                        currentBalance = 0;
+                        stopCalculation = true;
+                        break;
+                    }
+                    currentBalance += (currentBalance * monthlyInterestRate) + monthlyInvestment - monthlyWithdrawal;
+                    if (currentBalance < 0) currentBalance = 0;
+                }
+                const currentAgeData = { age: age + 1, amount: Math.max(0, currentBalance) };
+                if (!stopCalculation) {
+                    data.push(currentAgeData);
+                } else {
+                    const lastDataPoint = data[data.length - 1];
+                    if(lastDataPoint.age < currentAgeData.age) data.push(currentAgeData);
+                    else lastDataPoint.amount = 0;
+                    break; 
+                }
+            }
+            return data;
+        }
 
-            if current_balance < 0:
-                current_balance = 0
-                # stop_calculation = True # Optional: stop immediately if zeroed by withdrawal
-                # break
+        // --- D3 Plotting Function ---
+        function plotGrowth(data, params, tooltip) {
+            const { startAge, housePrice } = params;
+            const chartContainer = document.getElementById('chartContainer');
+            const svgEl = d3.select("#growthChart");
+            svgEl.selectAll("*").remove();
 
-        # Store end-of-year balance
-        if not stop_calculation:
-            if not ages or ages[-1] != age + 1:
-                ages.append(age + 1)
-                amounts.append(max(0, current_balance))
-            else: # Should not happen with current logic, but safe guard
-                 amounts[-1] = max(0, current_balance)
-        else:
-            # Add the final zero balance point if needed
-            if ages and ages[-1] != age + 1:
-                ages.append(age + 1)
-                amounts.append(0)
-            break # Exit year loop
+            if (!data || data.length === 0 || !chartContainer.clientWidth) {
+                svgEl.append("text").attr("x", "50%").attr("y", "50%").attr("text-anchor", "middle").attr("class", "fill-slate-500").text("התאם את הפרמטרים כדי להציג את התחזית");
+                return;
+            }
+            
+            const containerWidth = chartContainer.clientWidth;
+            const containerHeight = chartContainer.clientHeight;
+            const margin = { top: 20, right: 30, bottom: 40, left: 70 };
+            const width = containerWidth - margin.left - margin.right;
+            const height = containerHeight - margin.top - margin.bottom;
 
-    return ages, amounts
+            const g = svgEl.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+            const xScale = d3.scaleLinear().domain([startAge, 80]).range([0, width]);
+            const yScale = d3.scaleLinear().domain([0, Math.max(1, d3.max(data, d => d.amount) * 1.15, housePrice)]).range([height, 0]);
+            
+            g.append("g").attr("transform", `translate(0,${height})`)
+                .call(d3.axisBottom(xScale).ticks(Math.max(2, Math.floor(width / 80))).tickFormat(d3.format("d")));
+            g.append("text").attr("text-anchor", "middle").attr("x", width / 2).attr("y", height + margin.bottom - 5).text("גיל").attr("class", "text-sm fill-slate-500");
+            
+            g.append("g").call(d3.axisLeft(yScale).ticks(5).tickFormat(d => `₪${d3.format("~s")(d).replace('G', 'B').replace('M','M')}`));
+            
+            g.append("g").attr("class", "grid").attr("transform", `translate(0,${height})`).call(d3.axisBottom(xScale).tickSize(-height).tickFormat("").ticks(Math.max(2, Math.floor(width/80))));
+            g.append("g").attr("class", "grid").call(d3.axisLeft(yScale).tickSize(-width).tickFormat("").ticks(5));
+            d3.selectAll(".grid path").remove();
+            d3.selectAll(".grid line").attr("stroke", "#e2e8f0").attr("stroke-opacity", 0.7).attr("stroke-dasharray", "3 3");
 
-# --- Plotting Function ---
-def plot_growth(ages, amounts, start_age, end_age, initial_amount, monthly_investment, monthly_withdrawal, annual_interest_rate_percent):
-    """Generates and displays the matplotlib plot with text annotations for houses."""
-    plt.figure(figsize=(12, 7)) # Slightly smaller figure for widget layout
+            const area = d3.area().x(d => xScale(d.age)).y0(height).y1(d => yScale(d.amount)).curve(d3.curveMonotoneX);
+            g.append("path").datum(data).attr("fill", "#4f46e5").attr("fill-opacity", 0.1).attr("d", area);
 
-    if not ages or not amounts:
-        plt.title('No data to display. Check inputs.')
-        plt.text(0.5, 0.5, 'No data available.', horizontalalignment='center', verticalalignment='center', transform=plt.gca().transAxes)
-        plt.show()
-        return # Exit if no data
+            const line = d3.line().x(d => xScale(d.age)).y(d => yScale(d.amount)).curve(d3.curveMonotoneX);
+            g.append("path").datum(data).attr("fill", "none").attr("stroke", "#4f46e5").attr("stroke-width", 2.5).attr("d", line);
 
-    # --- Actual Plotting ---
-    plt.plot(ages, amounts, marker='.', linestyle='-', color='b', label='Investment Growth')
+            g.selectAll(".dot").data(data).enter().append("circle").attr("fill", "#4f46e5")
+                .attr("cx", d => xScale(d.age)).attr("cy", d => yScale(d.amount)).attr("r", 3)
+                .on("mouseover", (event, d) => {
+                    tooltip.transition().duration(200).style("opacity", 1);
+                    tooltip.html(`גיל: ${d.age}<br/>סכום: ₪${d3.format(",.0f")(d.amount)}`)
+                        .style("left", (event.pageX + 10) + "px").style("top", (event.pageY - 15) + "px");
+                }).on("mouseout", () => tooltip.transition().duration(500).style("opacity", 0));
+        }
 
-    # --- Annotations with Text ("X houses") ---
-    milestone_ages = [age for age in ages if age >= start_age and age % 5 == 0 and age <= end_age]
-    milestone_ages_with_amount = []
-    for age_ms in milestone_ages:
-        try:
-            index_ms = ages.index(age_ms)
-            # Only consider milestones where at least one house can be bought
-            # --- Using HOUSE_PRICE ---
-            if amounts[index_ms] >= HOUSE_PRICE:
-                 milestone_ages_with_amount.append(age_ms)
-        except (ValueError, IndexError): pass
+        // --- Main App Logic ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const tooltip = d3.select("body").append("div").attr("class", "tooltip");
+            const inputs = ['initialAmount', 'startAge', 'monthlyInvestment', 'monthlyWithdrawal', 'annualRate', 'housePrice'];
+            const params = {};
 
-    for milestone_age in milestone_ages_with_amount:
-        try:
-            index = ages.index(milestone_age)
-            amount_at_milestone = amounts[index]
-            # --- Using HOUSE_PRICE ---
-            num_houses = math.floor(amount_at_milestone / HOUSE_PRICE) # Calculate number of houses
+            inputs.forEach(id => {
+                const sliderInput = document.getElementById(id + 'Slider');
+                const valueDisplay = document.getElementById(id + 'Value');
+                
+                const updateValueDisplay = (val) => {
+                    const formatter = new Intl.NumberFormat('he-IL', { maximumFractionDigits: 1 });
+                    valueDisplay.textContent = formatter.format(val);
+                    if (id === 'annualRate') valueDisplay.textContent += '%';
+                    if (['initialAmount', 'monthlyInvestment', 'monthlyWithdrawal', 'housePrice'].includes(id)) {
+                        valueDisplay.textContent = '₪' + valueDisplay.textContent;
+                    }
+                };
+                
+                sliderInput.addEventListener('input', e => {
+                    updateValueDisplay(e.target.value);
+                    updateApp();
+                });
+                updateValueDisplay(sliderInput.value);
+            });
 
-            if num_houses > 0:
-                # --- Changed annotation to text "houses" ---
-                annotation_str = f"{num_houses} houses"
+            const updateApp = () => {
+                inputs.forEach(id => { params[id] = parseFloat(document.getElementById(id + 'Slider').value) || 0; });
+                const growthData = calculateGrowth(params);
+                plotGrowth(growthData, params, tooltip);
+                updateSummaryAndMilestones(params, growthData);
+            };
 
-                vertical_offset = amount_at_milestone * 0.03 # Slightly larger offset
-                plt.text(milestone_age, amount_at_milestone + vertical_offset, annotation_str,
-                         fontsize=8, # Consistent font size for text
-                         ha='center',
-                         va='bottom',
-                         bbox=dict(boxstyle='round,pad=0.2', fc='lightgreen', alpha=0.7, ec='none')) # Changed background color
-            # else: don't annotate if less than one house can be bought
-        except (ValueError, IndexError): pass
+            function createSummaryStat(label, value) {
+                return `<div><div class="text-sm text-slate-500">${label}</div><div class="text-xl font-semibold text-slate-800">${value}</div></div>`;
+            }
 
-    # --- Formatting ---
-    plt.title(f'Investment Growth (Compound Interest) from Age {start_age} to {end_age}', fontsize=14)
-    plt.xlabel('Age', fontsize=10)
-    plt.ylabel('Accumulated Amount (₪)', fontsize=10)
-    plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+            function createMilestoneStat(age, amount) {
+                return `<div class="text-center p-2 rounded-lg bg-slate-100 min-w-[80px]"><div class="text-base font-semibold text-slate-700">${age}</div><div class="text-xs text-slate-500">${amount}</div></div>`;
+            }
 
-    ax = plt.gca()
-    ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, p: format(int(x), ',')))
+            function updateSummaryAndMilestones(params, data) {
+                 const summaryContainer = document.getElementById('summary');
+                 const milestoneContainer = document.getElementById('milestoneList');
+                 summaryContainer.innerHTML = '';
+                 milestoneContainer.innerHTML = '';
 
-    min_y = min(amounts) if amounts else 0
-    max_y = max(amounts) if amounts else 1
-    # --- Adjust max Y based on HOUSE_PRICE ---
-    if max_y < 1: max_y = 5 * HOUSE_PRICE # Adjust max Y if needed based on house price
-    ax.set_ylim(bottom=min(0, min_y * 1.1), top=max_y * 1.15) # Increased top padding
+                 if (!data || data.length === 0) return;
 
-    tick_start = start_age if start_age % 5 == 0 else start_age - (start_age % 5)
-    all_ticks = sorted(list(set(range(tick_start, end_age + 1, 5))))
-    plt.xticks(all_ticks, rotation=45, ha="right", fontsize=9)
-    plt.xlim(start_age, end_age)
+                 const finalData = data[data.length - 1];
+                 const finalAmount = finalData.amount;
+                 const finalHouses = Math.floor(finalAmount / params.housePrice);
 
-    # --- Final Amount Text (Still shows currency) ---
-    final_amount = amounts[-1] if amounts else 0
-    final_age_actual = ages[-1] if ages else end_age
-    final_amount_text = f"Final Amount:\n₪{final_amount:,.2f}" # Keep final amount in currency
-    text_x_pos = final_age_actual * 0.98 if final_age_actual > start_age else start_age + (end_age - start_age) * 0.02
-    text_y_pos = final_amount * 0.7 if final_amount > 0 else max_y * 0.1
+                 summaryContainer.innerHTML += createSummaryStat('סכום סופי', `₪${d3.format(",.0f")(finalAmount)}`);
+                 summaryContainer.innerHTML += createSummaryStat('גיל סיום', finalData.age);
+                 summaryContainer.innerHTML += createSummaryStat('שווי בדירות', finalHouses > 0 ? `${finalHouses}` : '0');
+                 summaryContainer.innerHTML += createSummaryStat('ריבית שנתית', `${params.annualRate.toFixed(1)}%`);
 
-    # Check if the last age is a milestone to avoid overlap with house annotations
-    is_last_milestone_annotated = False
-    if final_age_actual in milestone_ages_with_amount:
-         is_last_milestone_annotated = True
+                 const milestoneAges = [40, 50, 60, 70, 80];
+                 milestoneAges.forEach(age => {
+                     if (age >= params.startAge) {
+                         const ageData = data.find(d => d.age === age);
+                         const amount = ageData ? ageData.amount : 0;
+                         const amountFormatted = `₪${d3.format("~s")(amount).replace('M', 'M').replace('k','k').replace('G','B')}`;
+                         milestoneContainer.innerHTML += createMilestoneStat(`${age}`, amountFormatted);
+                     }
+                 });
+            }
+            
+            updateApp();
+            // Use ResizeObserver for responsive chart redrawing
+            new ResizeObserver(updateApp).observe(document.getElementById('chartContainerWrapper'));
+        });
+    </script>
+</body>
+</html>
 
-    if final_amount > 0.01 and not is_last_milestone_annotated:
-        plt.text(text_x_pos, text_y_pos, final_amount_text,
-                 fontsize=9, ha='right',
-                 bbox=dict(boxstyle='round,pad=0.5', fc='yellow', alpha=0.7))
-    elif final_amount <= 0.01 and final_age_actual > start_age:
-         plt.text(final_age_actual, max_y * 0.1, f"Balance depleted at Age {final_age_actual}",
-                  fontsize=9, ha='center', va='center', color='red',
-                  bbox=dict(boxstyle='round,pad=0.5', fc='white', alpha=0.7))
-
-    plt.tight_layout()
-    plt.show()
-
-    # --- Print Summary ---
-    print(f"\n--- Summary ---")
-    print(f"Initial: ₪{initial_amount:,.2f} | Start Age: {start_age}")
-    print(f"Monthly Deposit: ₪{monthly_investment:,.2f} | Monthly Withdrawal: ₪{monthly_withdrawal:,.2f}")
-    # --- Updated summary with HOUSE_PRICE ---
-    print(f"Annual Rate: {annual_interest_rate_percent}% | Assumed House Price: ₪{HOUSE_PRICE:,.0f}")
-    if amounts:
-        print(f"Final Amount at Age {final_age_actual}: ₪{final_amount:,.2f}")
-        # Also show final house count in summary
-        # --- Using HOUSE_PRICE ---
-        final_houses = math.floor(final_amount / HOUSE_PRICE)
-        if final_houses > 0:
-             # --- Changed summary to text "houses" ---
-            print(f"Equivalent to approx. {final_houses} houses")
-    else:
-        print("No final amount data to display.")
-
-
-# --- Create Widgets ---
-style = {'description_width': 'initial'} # Allow longer descriptions
-layout = Layout(width='auto', margin='5px') # Adjust width and margin
-
-initial_amount_w = widgets.FloatText(value=100000, description="Initial Amount (₪):", style=style, layout=layout, step=1000)
-start_age_w = widgets.IntText(value=30, description="Start Age:", style=style, layout=layout, step=1)
-monthly_investment_w = widgets.FloatText(value=1000, description="Monthly Deposit (₪):", style=style, layout=layout, step=100)
-monthly_withdrawal_w = widgets.FloatText(value=0, description="Monthly Withdrawal (₪):", style=style, layout=layout, step=100)
-annual_rate_w = widgets.FloatText(value=7.0, description="Annual Rate (%):", style=style, layout=layout, step=0.1)
-# end_age_w = widgets.IntText(value=80, description="End Age:", style=style, layout=layout) # Optional: make end_age interactive too
-
-# --- Output Widget for the plot ---
-plot_output = widgets.Output()
-
-# --- Define the function to be called on widget changes ---
-def update_plot(initial, age, invest, withdraw, rate):
-    """Clears output, recalculates, and replots."""
-    with plot_output:
-        clear_output(wait=True) # Clear previous plot before drawing new one
-        # Use fixed end_age=80 for now, or pass end_age_w.value if widget is added
-        ages_data, amounts_data = calculate_growth(initial, age, invest, withdraw, rate, end_age=80)
-        plot_growth(ages_data, amounts_data, age, 80, initial, invest, withdraw, rate) # Pass all params for summary
-
-# --- Link Widgets to the Update Function ---
-# Use interactive_output to connect the widgets to the update function.
-# The update function will run whenever any of the linked widget values change.
-ui = VBox([
-    HBox([initial_amount_w, start_age_w]),
-    HBox([monthly_investment_w, monthly_withdrawal_w]),
-    HBox([annual_rate_w]),
-    plot_output # The area where the plot will appear
-])
-
-# Define the interactive linkage
-interactive_plot = interactive_output(update_plot, {
-    'initial': initial_amount_w,
-    'age': start_age_w,
-    'invest': monthly_investment_w,
-    'withdraw': monthly_withdrawal_w,
-    'rate': annual_rate_w
-    # 'end': end_age_w # Add if end_age widget is used
-})
-
-# --- Display the UI ---
-print("Adjust the values below to see the graph update:")
-display(ui)
-# Trigger the initial plot calculation
-update_plot(initial_amount_w.value, start_age_w.value, monthly_investment_w.value, monthly_withdrawal_w.value, annual_rate_w.value)
