@@ -14,36 +14,10 @@
             font-family: 'Rubik', sans-serif;
             background-color: #f8fafc; /* Tailwind: slate-50 */
         }
-        /* Custom Slider Styles */
+        /* Removed custom slider styles to ensure native mobile behavior */
         .slider {
-            -webkit-appearance: none;
-            appearance: none;
             width: 100%;
-            height: 6px;
-            background: #e2e8f0; /* slate-200 */
-            border-radius: 3px;
-            outline: none;
-            transition: opacity .2s;
-        }
-        .slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 18px;
-            height: 18px;
-            background: #4f46e5; /* indigo-600 */
-            cursor: pointer;
-            border-radius: 50%;
-            border: 2px solid white;
-            box-shadow: 0 0 0 1px rgba(0,0,0,0.05);
-        }
-        .slider::-moz-range-thumb {
-            width: 18px;
-            height: 18px;
-            background: #4f46e5; /* indigo-600 */
-            cursor: pointer;
-            border-radius: 50%;
-            border: 2px solid white;
-            box-shadow: 0 0 0 1px rgba(0,0,0,0.05);
+            margin-top: 0.75rem;
         }
         .ui-panel {
             background-color: white;
@@ -80,48 +54,48 @@
             <div class="lg:col-span-1 ui-panel self-start lg:sticky lg:top-28">
                 <h2 class="text-lg font-semibold text-slate-700 mb-5">הגדרת פרמטרים</h2>
                 <div class="space-y-6">
-                    <div>
-                        <label for="initialAmountSlider" class="flex justify-between text-sm font-medium text-slate-600">
+                    <label>
+                        <div class="flex justify-between text-sm font-medium text-slate-600">
                             <span>סכום התחלתי</span>
                             <span id="initialAmountValue" class="font-semibold text-indigo-600"></span>
-                        </label>
-                        <input type="range" id="initialAmountSlider" min="0" max="2000000" step="5000" value="100000" class="slider mt-2">
-                    </div>
-                    <div>
-                        <label for="startAgeSlider" class="flex justify-between text-sm font-medium text-slate-600">
+                        </div>
+                        <input type="range" id="initialAmountSlider" min="0" max="2000000" step="5000" value="100000" class="slider">
+                    </label>
+                    <label>
+                        <div class="flex justify-between text-sm font-medium text-slate-600">
                             <span>גיל התחלה</span>
                             <span id="startAgeValue" class="font-semibold text-indigo-600"></span>
-                        </label>
-                        <input type="range" id="startAgeSlider" min="18" max="70" step="1" value="30" class="slider mt-2">
-                    </div>
-                    <div>
-                        <label for="monthlyInvestmentSlider" class="flex justify-between text-sm font-medium text-slate-600">
+                        </div>
+                        <input type="range" id="startAgeSlider" min="18" max="70" step="1" value="30" class="slider">
+                    </label>
+                    <label>
+                        <div class="flex justify-between text-sm font-medium text-slate-600">
                             <span>הפקדה חודשית</span>
                              <span id="monthlyInvestmentValue" class="font-semibold text-indigo-600"></span>
-                        </label>
-                        <input type="range" id="monthlyInvestmentSlider" min="0" max="25000" step="500" value="1000" class="slider mt-2">
-                    </div>
-                    <div>
-                        <label for="monthlyWithdrawalSlider" class="flex justify-between text-sm font-medium text-slate-600">
+                        </div>
+                        <input type="range" id="monthlyInvestmentSlider" min="0" max="25000" step="500" value="1000" class="slider">
+                    </label>
+                    <label>
+                        <div class="flex justify-between text-sm font-medium text-slate-600">
                             <span>משיכה חודשית</span>
                             <span id="monthlyWithdrawalValue" class="font-semibold text-indigo-600"></span>
-                        </label>
-                        <input type="range" id="monthlyWithdrawalSlider" min="0" max="25000" step="500" value="0" class="slider mt-2">
-                    </div>
-                    <div>
-                        <label for="annualRateSlider" class="flex justify-between text-sm font-medium text-slate-600">
+                        </div>
+                        <input type="range" id="monthlyWithdrawalSlider" min="0" max="25000" step="500" value="0" class="slider">
+                    </label>
+                    <label>
+                        <div class="flex justify-between text-sm font-medium text-slate-600">
                             <span>ריבית שנתית</span>
                             <span id="annualRateValue" class="font-semibold text-indigo-600"></span>
-                        </label>
-                        <input type="range" id="annualRateSlider" min="0" max="25" step="0.1" value="7.0" class="slider mt-2">
-                    </div>
-                     <div>
-                        <label for="housePriceSlider" class="flex justify-between text-sm font-medium text-slate-600">
+                        </div>
+                        <input type="range" id="annualRateSlider" min="0" max="25" step="0.1" value="7.0" class="slider">
+                    </label>
+                     <label>
+                        <div class="flex justify-between text-sm font-medium text-slate-600">
                             <span>מחיר דירה להשוואה</span>
                             <span id="housePriceValue" class="font-semibold text-indigo-600"></span>
-                        </label>
-                        <input type="range" id="housePriceSlider" min="500000" max="5000000" step="50000" value="2000000" class="slider mt-2">
-                    </div>
+                        </div>
+                        <input type="range" id="housePriceSlider" min="500000" max="5000000" step="50000" value="2000000" class="slider">
+                    </label>
                 </div>
             </div>
 
